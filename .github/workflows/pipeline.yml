@@ -45,15 +45,74 @@ jobs:
         run: npm run eslint
       - name: Build
         run: npm run build
+      - name: Build success
+        uses: rjstone/discord-webhook-notify@89b0bf43c2c8514f70d0dcba4a706b904e8a3112
+        if: success()
+        with:
+          severity: info
+          description: ${{ github.repository }} Build successed!
+          webhookUrl: ${{ secrets.DISCORD_WEBHOOK }}
+      - name: Build failure
+        uses: rjstone/discord-webhook-notify@89b0bf43c2c8514f70d0dcba4a706b904e8a3112
+        if: failure()
+        with:
+          severity: error
+          description: ${{ github.repository }} Build failed!
+          webhookUrl: ${{ secrets.DISCORD_WEBHOOK }}
+      - name: Check style
+        run: npm run eslint
+      - name: Linting success
+        uses: rjstone/discord-webhook-notify@89b0bf43c2c8514f70d0dcba4a706b904e8a3112
+        if: success()
+        with:
+          severity: info
+          description: ${{ github.repository }} Linting passed!
+          webhookUrl: ${{ secrets.DISCORD_WEBHOOK }}
+      - name: Linting failure
+        uses: rjstone/discord-webhook-notify@89b0bf43c2c8514f70d0dcba4a706b904e8a3112
+        if: failure()
+        with:
+          severity: error
+          description: ${{ github.repository }} Linting failed!
+          webhookUrl: ${{ secrets.DISCORD_WEBHOOK }}
       - name: Test
         run: npm test
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps
       - name: End-to-end tests
         run: npm run test:e2e
+      - name: Test success
+        uses: rjstone/discord-webhook-notify@89b0bf43c2c8514f70d0dcba4a706b904e8a3112
+        if: success()
+        with:
+          severity: info
+          description: ${{ github.repository }} Test passed!
+          webhookUrl: ${{ secrets.DISCORD_WEBHOOK }}
+      - name: Test failure
+        uses: rjstone/discord-webhook-notify@89b0bf43c2c8514f70d0dcba4a706b904e8a3112
+        if: failure()
+        with:
+          severity: error
+          description: ${{ github.repository }} Test failed!
+          webhookUrl: ${{ secrets.DISCORD_WEBHOOK }}
       - name: Trigger deployment
         if: ${{ github.event_name == 'push' && needs.commit-message-check.outputs.should_deploy_or_release == 'true' }}
         run: curl https://api.render.com/deploy/srv-${{ secrets.RENDER_SERVICE_ID }}?key=${{ secrets.RENDER_API_KEY }}
+      - name: Deployment success
+        uses: rjstone/discord-webhook-notify@89b0bf43c2c8514f70d0dcba4a706b904e8a3112
+        if: ${{ github.event_name == 'push' && needs.commit-message-check.outputs.should_deploy_or_release == 'true' && success() }}
+        with:
+          severity: info
+          description: ${{ github.repository }} Deployment succeeded!
+          webhookUrl: ${{ secrets.DISCORD_WEBHOOK }}
+      - name: Deployment failure
+        uses: rjstone/discord-webhook-notify@89b0bf43c2c8514f70d0dcba4a706b904e8a3112
+        if: ${{ github.event_name == 'push' && needs.commit-message-check.outputs.should_deploy_or_release == 'true' && failure() }}
+        with:
+          severity: error
+          description: ${{ github.repository }} Deployment failed!
+          webhookUrl: ${{ secrets.DISCORD_WEBHOOK }}
+
   tag_release:
     needs:
       - simple_deployment_pipeline
@@ -70,3 +129,17 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DEFAULT_BUMP: patch
           WITH_V: true
+      - name: Version update success
+        uses: rjstone/discord-webhook-notify@89b0bf43c2c8514f70d0dcba4a706b904e8a3112
+        if: success()
+        with:
+          severity: info
+          description: ${{ github.repository }} Version updated!
+          webhookUrl: ${{ secrets.DISCORD_WEBHOOK }}
+      - name: Version update failure
+        uses: rjstone/discord-webhook-notify@89b0bf43c2c8514f70d0dcba4a706b904e8a3112
+        if: failure()
+        with:
+          severity: error
+          description: ${{ github.repository }} Version update failed!
+          webhookUrl: ${{ secrets.DISCORD_WEBHOOK }}
