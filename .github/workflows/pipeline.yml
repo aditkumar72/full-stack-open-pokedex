@@ -12,8 +12,28 @@ on:
       - synchronize
 
 jobs:
+  commit-message-check:
+    runs-on: ubuntu-20.04
+    outputs:
+      should_deploy_or_release: |
+        ${{ steps.check_skip_tag.outputs.should_deploy_or_release }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: "0"
+      - name: Check for "#skip" tag
+        id: check_skip_tag
+        run: |
+          LAST_COMMIT_MESSAGE=$(git log -1 --pretty=%B)
+          if [[ $LAST_COMMIT_MESSAGE == *"#skip"* ]]; then
+            echo "should_deploy_or_release=false" >> $GITHUB_OUTPUT
+          else
+            echo "should_deploy_or_release=true" >> $GITHUB_OUTPUT
+          fi
+
   simple_deployment_pipeline:
     runs-on: ubuntu-20.04
+    needs: commit-message-check
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -32,19 +52,18 @@ jobs:
       - name: End-to-end tests
         run: npm run test:e2e
       - name: Trigger deployment
-        if: ${{ github.event_name == 'push' }}
+        if: ${{ github.event_name == 'push' && needs.commit-message-check.outputs.should_deploy_or_release == 'true' }}
         run: curl https://api.render.com/deploy/srv-${{ secrets.RENDER_SERVICE_ID }}?key=${{ secrets.RENDER_API_KEY }}
   tag_release:
-    if: ${{ github.event_name == 'push' }}
-    needs: simple_deployment_pipeline
+    needs:
+      - simple_deployment_pipeline
+      - commit-message-check
+    if: ${{ github.event_name == 'push' && needs.commit-message-check.outputs.should_deploy_or_release == 'true'}}
     runs-on: ubuntu-20.04
     permissions:
       contents: write
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.merge_commit_sha }}
-          fetch-depth: '0'
       - name: Bump version and push tag
         uses: anothrNick/github-tag-action@1.71.0
         env:
