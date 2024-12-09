@@ -1,8 +1,7 @@
 name: Deployment pipeline
 
 env:
-  PR_LINK: ${{ github.event.pull_request.html_url }}
-  REPO_NAME: ${{ github.repository }}
+  REPO_OR_PR_LINK: ${{ github.event.pull_request.html_url || github.repository }}
 
 on:
   push:
@@ -55,14 +54,14 @@ jobs:
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
         with:
-          args: "Build succeeded for ${{ env.PR_LINK }}"
+          args: "Build succeeded for ${{ env.REPO_OR_PR_LINK }}"
       - name: Build failure
         uses: Ilshidur/action-discord@0c4b27844ba47cb1c7bee539c8eead5284ce9fa9
         if: failure()
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
         with:
-          args: "Build failed for ${{ env.PR_LINK }}"
+          args: "Build failed for ${{ env.REPO_OR_PR_LINK }}"
       - name: Check style
         run: npm run eslint
       - name: Linting success
@@ -71,14 +70,14 @@ jobs:
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
         with:
-          args: "Linting passed for ${{ env.PR_LINK }}"
+          args: "Linting passed for ${{ env.REPO_OR_PR_LINK }}"
       - name: Linting failure
         uses: Ilshidur/action-discord@0c4b27844ba47cb1c7bee539c8eead5284ce9fa9
         if: failure()
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
         with:
-          args: "Linting failed for ${{ env.PR_LINK }}"
+          args: "Linting failed for ${{ env.REPO_OR_PR_LINK }}"
       - name: Test
         run: npm test
       - name: Install Playwright Browsers
@@ -91,14 +90,14 @@ jobs:
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
         with:
-          args: "Test passed for ${{ env.PR_LINK }}"
+          args: "Test passed for ${{ env.REPO_OR_PR_LINK }}"
       - name: Test failure
         uses: Ilshidur/action-discord@0c4b27844ba47cb1c7bee539c8eead5284ce9fa9
         if: failure()
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
         with:
-          args: "Test failed for ${{ env.PR_LINK }}"
+          args: "Test failed for ${{ env.REPO_OR_PR_LINK }}"
       - name: Trigger deployment
         if: ${{ github.event_name == 'push' && needs.commit-message-check.outputs.should_deploy_or_release == 'true' }}
         run: curl https://api.render.com/deploy/srv-${{ secrets.RENDER_SERVICE_ID }}?key=${{ secrets.RENDER_API_KEY }}
@@ -108,14 +107,14 @@ jobs:
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
         with:
-          args: "New deployment succeeded for ${{ env.REPO_NAME }}"
+          args: "New deployment succeeded for ${{ env.REPO_OR_PR_LINK }}"
       - name: Deployment failure
         uses: Ilshidur/action-discord@0c4b27844ba47cb1c7bee539c8eead5284ce9fa9
         if: ${{ github.event_name == 'push' && needs.commit-message-check.outputs.should_deploy_or_release == 'true' && failure() }}
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
         with:
-          args: "Deployment failed for ${{ env.REPO_NAME }}"
+          args: "Deployment failed for ${{ env.REPO_OR_PR_LINK }}"
 
   tag_release:
     needs:
@@ -139,11 +138,11 @@ jobs:
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
         with:
-          args: "Version updated successfully for ${{ env.REPO_NAME }}"
+          args: "Version updated successfully for ${{ env.REPO_OR_PR_LINK }}"
       - name: Version update failure
         uses: Ilshidur/action-discord@0c4b27844ba47cb1c7bee539c8eead5284ce9fa9
         if: failure()
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
         with:
-          args: "Version update failed for ${{ env.REPO_NAME }}"
+          args: "Version update failed for ${{ env.REPO_OR_PR_LINK }}"
