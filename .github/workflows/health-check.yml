@@ -1,9 +1,9 @@
 name: Health Check
 
 on:
-  push:
-    branches:
-      - main
+  schedule:
+    # Run every day at 10:00 UTC
+    - cron: "0 10 * * *"
 
 jobs:
   health_check:
